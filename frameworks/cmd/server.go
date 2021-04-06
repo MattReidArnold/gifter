@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/mattreidarnold/gifter/app"
-	"github.com/mattreidarnold/gifter/app/usecase"
+	"github.com/mattreidarnold/gifter/app/handlers"
 	log "github.com/mattreidarnold/gifter/frameworks/log"
 	"github.com/mattreidarnold/gifter/frameworks/transport"
 )
@@ -43,9 +43,13 @@ func serverRun(cmd *cobra.Command, args []string) {
 		Logger: logger,
 	}
 
-	addGifter := usecase.NewAddGifter(d)
+	var msgBus app.MessageBus
+	{
+		msgBus = app.NewMessageBus()
+		msgBus.Register(handlers.MakeAddGifter(d))
+	}
 
-	h := transport.MakeHTTPHandler(kitLogger, addGifter)
+	h := transport.MakeHTTPHandler(kitLogger, msgBus)
 
 	errs := make(chan error)
 

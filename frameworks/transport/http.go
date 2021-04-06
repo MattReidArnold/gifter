@@ -11,7 +11,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 
-	"github.com/mattreidarnold/gifter/app/usecase"
+	"github.com/mattreidarnold/gifter/app"
 	"github.com/mattreidarnold/gifter/interface/endpoints"
 	"github.com/mattreidarnold/gifter/interface/presenters"
 )
@@ -25,7 +25,7 @@ var (
 	ErrBadRouting = errors.New("inconsistent mapping between route and handler (programmer error)")
 )
 
-func MakeHTTPHandler(logger log.Logger, addGifter usecase.AddGifter) http.Handler {
+func MakeHTTPHandler(logger log.Logger, msgBus app.MessageBus) http.Handler {
 	r := mux.NewRouter()
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
@@ -33,7 +33,7 @@ func MakeHTTPHandler(logger log.Logger, addGifter usecase.AddGifter) http.Handle
 	}
 
 	r.Methods("POST").Path("/gifters").Handler(kithttp.NewServer(
-		endpoints.MakeAddGifter(addGifter),
+		endpoints.MakeAddGifter(msgBus),
 		decodeAddGifterRequest,
 		encodeResponse,
 		options...,
