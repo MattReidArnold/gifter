@@ -4,10 +4,6 @@ import (
 	"reflect"
 )
 
-type messageBus struct {
-	handlers HandlerRegistry
-}
-
 type MessageType int
 
 const (
@@ -21,6 +17,12 @@ type Message interface {
 	Payload() interface{}
 }
 
+type HandlerFunc func(Message) error
+
+type HandlerRegistry map[reflect.Type][]HandlerFunc
+type messageBus struct {
+	handlers HandlerRegistry
+}
 type message struct {
 	messageType MessageType
 	payload     interface{}
@@ -68,7 +70,3 @@ func (mb *messageBus) Register(t reflect.Type, h HandlerFunc) {
 	handlers = append(handlers, h)
 	mb.handlers[t] = handlers
 }
-
-type HandlerFunc func(Message) error
-
-type HandlerRegistry map[reflect.Type][]HandlerFunc
