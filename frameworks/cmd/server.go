@@ -45,8 +45,8 @@ func serverRun(cmd *cobra.Command, args []string) {
 
 	var msgBus app.MessageBus
 	{
-		msgBus = app.NewMessageBus()
-		msgBus.Register(handlers.MakeAddGifter(d))
+		msgBus = app.NewMessageBus(logger)
+		msgBus.RegisterCommandHandler(handlers.MakeAddGifter(d))
 	}
 
 	h := transport.MakeHTTPHandler(kitLogger, msgBus)
