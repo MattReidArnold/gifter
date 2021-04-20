@@ -1,5 +1,6 @@
 package domain
 
 type AddGifterCommand struct {
-	Name string
+	CircleID string
+	Name     string
 }

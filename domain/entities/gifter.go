@@ -7,3 +7,9 @@ type Gifter struct {
 	ID            string
 	GiftTo        string
 }
+
+// Circle is a group of gifters who will exchange gifts with each other
+type Circle struct {
+	ID      string
+	Gifters []Gifter
+}

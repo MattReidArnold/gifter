@@ -1,9 +1,11 @@
 package presenters
 
 type AddGifterRequest struct {
-	Name string `json:"name"`
+	CircleID string `json:"circleId"`
+	Name     string `json:"name"`
 }
 
 type AddGifterResponse struct {
-	Name string `json:"name"`
+	CircleID string `json:"circleId"`
+	Name     string `json:"name"`
 }
