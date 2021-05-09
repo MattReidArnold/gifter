@@ -15,7 +15,15 @@ func MakeAddGifter(d *app.Dependencies) (reflect.Type, app.HandlerFunc) {
 		if !ok {
 			return errors.New("invalid message received by handler")
 		}
-		d.Logger.Info(fmt.Sprintf("Adding gifter %s to circle %s", cmd.Name, cmd.CircleID))
-		return nil
+		d.Logger.Info(fmt.Sprintf("Adding gifter %s to group %s", cmd.Name, cmd.GroupID))
+
+		group, err := d.GroupRepository.Get(cmd.GroupID)
+		if err != nil {
+			return err
+		}
+
+		err = group.AddGifter(domain.NewGifter(cmd.Name))
+		d.Logger.Info((fmt.Sprintf("group: %+v", group)))
+		return err
 	}
 }
