@@ -6,5 +6,5 @@ type Dependencies struct {
 }
 
 type Logger interface {
-	Info(s string)
+	Info(args ...string)
 }
