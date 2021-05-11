@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"reflect"
 
 	"github.com/mattreidarnold/gifter/app"
@@ -16,7 +15,6 @@ func MakeAddGifter(d *app.Dependencies) (reflect.Type, app.HandlerFunc) {
 		if !ok {
 			return errors.New("invalid message received by handler")
 		}
-		d.Logger.Info(fmt.Sprintf("Adding gifter %s to group %s", cmd.Name, cmd.GroupID))
 
 		group, err := d.GroupRepository.Get(ctx, cmd.GroupID)
 		if err != nil {
