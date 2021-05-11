@@ -28,6 +28,7 @@ func (r *groupRepo) Get(id string) (domain.Group, error) {
 	}
 	return g, nil
 }
+
 func (r *groupRepo) Add(group domain.Group) error {
 	if _, ok := r.groups[group.ID()]; ok {
 		return errors.New("already exists")
