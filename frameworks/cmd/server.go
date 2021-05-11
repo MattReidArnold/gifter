@@ -41,7 +41,7 @@ func serverRun(cmd *cobra.Command, args []string) {
 
 	logger := log.NewLogger(kitLogger)
 
-	groupRepo := persistence.NewGroupRepository(domain.NewGroup("1234", "group-name", 100))
+	groupRepo := persistence.NewGroupRepository(logger, domain.NewGroup("1234", "group-name", 100))
 
 	d := &app.Dependencies{
 		Logger:          logger,

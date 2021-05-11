@@ -11,13 +11,13 @@ import (
 )
 
 func MakeAddGifter(msgBus app.MessageBus) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(presenters.AddGifterRequest)
 		cmd := app.NewCommandMessage(domain.AddGifterCommand{
 			GroupID: req.GroupID,
 			Name:    req.Name,
 		})
-		err := msgBus.Handle(cmd)
+		err := msgBus.Handle(ctx, cmd)
 		if err != nil {
 			return nil, err
 		}

@@ -1,8 +1,13 @@
 package app
 
-import "github.com/mattreidarnold/gifter/domain"
+import (
+	"context"
+
+	"github.com/mattreidarnold/gifter/domain"
+)
 
 type GroupRepository interface {
-	Get(string) (domain.Group, error)
-	Add(domain.Group) error
+	Get(context.Context, string) (domain.Group, error)
+	Add(context.Context, domain.Group) error
+	Save(context.Context, domain.Group) error
 }

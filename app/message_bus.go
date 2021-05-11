@@ -2,6 +2,7 @@ package app
 
 import (
 	"container/list"
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -21,7 +22,7 @@ type Message interface {
 	PayloadType() reflect.Type
 }
 
-type HandlerFunc func(Message) error
+type HandlerFunc func(context.Context, Message) error
 
 type EventHandlerRegistry map[reflect.Type][]HandlerFunc
 
@@ -62,7 +63,7 @@ func (m *message) String() string {
 }
 
 type MessageBus interface {
-	Handle(Message) error
+	Handle(context.Context, Message) error
 	RegisterCommandHandler(reflect.Type, HandlerFunc)
 	RegisterEventHandler(reflect.Type, HandlerFunc)
 }
@@ -82,7 +83,7 @@ func NewMessageBus(l Logger) MessageBus {
 	}
 }
 
-func (mb *messageBus) Handle(m Message) error {
+func (mb *messageBus) Handle(ctx context.Context, m Message) error {
 	mb.queue.Init().PushFront(m)
 	for mb.queue.Len() > 0 {
 		node := mb.queue.Front()
@@ -94,9 +95,9 @@ func (mb *messageBus) Handle(m Message) error {
 		var err error
 		switch msg.MessageType() {
 		case MessageTypeCommand:
-			err = mb.handleCommand(msg)
+			err = mb.handleCommand(ctx, msg)
 		case MessageTypeEvent:
-			err = mb.handleEvent(msg)
+			err = mb.handleEvent(ctx, msg)
 		default:
 			err = errors.New("invalid message type")
 		}
@@ -108,12 +109,12 @@ func (mb *messageBus) Handle(m Message) error {
 	return nil
 }
 
-func (mb *messageBus) handleCommand(m Message) error {
+func (mb *messageBus) handleCommand(ctx context.Context, m Message) error {
 	handler, ok := mb.commandHandlers[m.PayloadType()]
 	if !ok {
 		return errors.New("command handler not found")
 	}
-	err := handler(m)
+	err := handler(ctx, m)
 	if err != nil {
 		return err
 	}
@@ -121,10 +122,10 @@ func (mb *messageBus) handleCommand(m Message) error {
 	return nil
 }
 
-func (mb *messageBus) handleEvent(m Message) error {
+func (mb *messageBus) handleEvent(ctx context.Context, m Message) error {
 	handlers := mb.eventHandlers[m.PayloadType()]
 	for _, h := range handlers {
-		err := h(m)
+		err := h(ctx, m)
 		if err != nil {
 			return err
 		}
