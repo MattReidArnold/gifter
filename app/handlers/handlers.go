@@ -27,7 +27,6 @@ func MakeAddGifter(d *app.Dependencies) (reflect.Type, app.HandlerFunc) {
 		if err != nil {
 			return err
 		}
-		d.Logger.Info((fmt.Sprintf("group: %+v", group)))
 		err = d.GroupRepository.Save(ctx, group)
 		return err
 	}
