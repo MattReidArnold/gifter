@@ -13,6 +13,7 @@ import (
 	"github.com/mattreidarnold/gifter/app"
 	"github.com/mattreidarnold/gifter/app/handlers"
 	"github.com/mattreidarnold/gifter/domain"
+	"github.com/mattreidarnold/gifter/frameworks/id"
 	log "github.com/mattreidarnold/gifter/frameworks/log"
 	persistence "github.com/mattreidarnold/gifter/frameworks/persistence/inmem"
 	"github.com/mattreidarnold/gifter/frameworks/transport"
@@ -43,18 +44,18 @@ func serverRun(cmd *cobra.Command, args []string) {
 
 	groupRepo := persistence.NewGroupRepository(logger, domain.NewGroup("1234", "group-name", 100))
 
+	msgBus := app.NewMessageBus(logger)
+
 	d := &app.Dependencies{
 		Logger:          logger,
 		GroupRepository: groupRepo,
+		MessageBus:      msgBus,
+		GenerateID:      id.GenerateId,
 	}
 
-	var msgBus app.MessageBus
-	{
-		msgBus = app.NewMessageBus(logger)
-		msgBus.RegisterCommandHandler(handlers.MakeAddGifter(d))
-	}
+	handlers.RegisterAll(d)
 
-	h := transport.MakeHTTPHandler(kitLogger, msgBus)
+	h := transport.MakeHTTPHandler(kitLogger, d)
 
 	errs := make(chan error)
 

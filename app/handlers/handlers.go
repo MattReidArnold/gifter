@@ -21,7 +21,7 @@ func MakeAddGifter(d *app.Dependencies) (reflect.Type, app.HandlerFunc) {
 			return err
 		}
 
-		err = group.AddGifter(domain.NewGifter(cmd.Name))
+		err = group.AddGifter(domain.NewGifter(cmd.GifterID, cmd.Name))
 		if err != nil {
 			return err
 		}

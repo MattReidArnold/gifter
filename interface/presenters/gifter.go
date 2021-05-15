@@ -6,6 +6,7 @@ type AddGifterRequest struct {
 }
 
 type AddGifterResponse struct {
-	GroupID string `json:"groupId"`
-	Name    string `json:"name"`
+	GifterID string `json:"gifterId"`
+	GroupID  string `json:"groupId"`
+	Name     string `json:"name"`
 }

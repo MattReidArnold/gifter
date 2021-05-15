@@ -1,6 +1,7 @@
 package domain
 
 type AddGifterCommand struct {
-	GroupID string
-	Name    string
+	GroupID  string
+	GifterID string
+	Name     string
 }

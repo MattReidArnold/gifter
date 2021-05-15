@@ -25,7 +25,7 @@ var (
 	ErrBadRouting = errors.New("inconsistent mapping between route and handler (programmer error)")
 )
 
-func MakeHTTPHandler(logger log.Logger, msgBus app.MessageBus) http.Handler {
+func MakeHTTPHandler(logger log.Logger, d *app.Dependencies) http.Handler {
 	r := mux.NewRouter()
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
@@ -33,7 +33,7 @@ func MakeHTTPHandler(logger log.Logger, msgBus app.MessageBus) http.Handler {
 	}
 
 	r.Methods("POST").Path("/gifters").Handler(kithttp.NewServer(
-		endpoints.MakeAddGifter(msgBus),
+		endpoints.MakeAddGifter(d),
 		decodeAddGifterRequest,
 		encodeResponse,
 		options...,

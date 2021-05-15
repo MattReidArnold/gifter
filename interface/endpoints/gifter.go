@@ -10,17 +10,30 @@ import (
 	"github.com/mattreidarnold/gifter/interface/presenters"
 )
 
-func MakeAddGifter(msgBus app.MessageBus) endpoint.Endpoint {
+func MakeAddGifter(d *app.Dependencies) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(presenters.AddGifterRequest)
-		cmd := app.NewCommandMessage(domain.AddGifterCommand{
-			GroupID: req.GroupID,
-			Name:    req.Name,
-		})
-		err := msgBus.Handle(ctx, cmd)
+
+		gifterID, err := d.GenerateID()
 		if err != nil {
 			return nil, err
 		}
-		return presenters.AddGifterResponse(req), nil
+
+		cmd := app.NewCommandMessage(domain.AddGifterCommand{
+			Name:     req.Name,
+			GifterID: gifterID,
+			GroupID:  req.GroupID,
+		})
+
+		err = d.MessageBus.Handle(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+
+		return presenters.AddGifterResponse{
+			GifterID: gifterID,
+			GroupID:  req.GroupID,
+			Name:     req.Name,
+		}, nil
 	}
 }

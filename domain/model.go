@@ -1,6 +1,7 @@
 package domain
 
 type Gifter interface {
+	ID() string
 	Name() string
 }
 
@@ -13,17 +14,23 @@ type Group interface {
 }
 
 type gifter struct {
+	id   string
 	name string
 }
 
-func NewGifter(name string) Gifter {
+func NewGifter(id, name string) Gifter {
 	return &gifter{
+		id:   id,
 		name: name,
 	}
 }
 
 func (g *gifter) Name() string {
 	return g.name
+}
+
+func (g *gifter) ID() string {
+	return g.id
 }
 
 type group struct {
