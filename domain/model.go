@@ -40,11 +40,12 @@ type group struct {
 	gifters []Gifter
 }
 
-func NewGroup(id, name string, budget float64) Group {
+func NewGroup(id, name string, budget float64, gifters []Gifter) Group {
 	return &group{
-		id:     id,
-		name:   name,
-		budget: budget,
+		id:      id,
+		name:    name,
+		budget:  budget,
+		gifters: gifters,
 	}
 }
 
