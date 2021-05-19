@@ -1,4 +1,4 @@
-package persistence
+package inmem
 
 import (
 	"context"
