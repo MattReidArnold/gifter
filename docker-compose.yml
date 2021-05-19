@@ -2,6 +2,23 @@
 version: "3.1"
 
 services:
+  server:
+    image: golang:1.16-alpine
+    depends_on:
+      - mongo
+    ports:
+      - 8080:8080
+    environment:
+      MONGO_DATABASE: groups
+      MONGO_HOST: mongo
+      MONGO_PASSWORD: Password123
+      MONGO_PORT: 27017
+      MONGO_USERNAME: groupsUser
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "go run main.go server"
+
   mongo:
     image: mongo
     restart: always
