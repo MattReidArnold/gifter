@@ -12,10 +12,10 @@ import (
 
 	"github.com/mattreidarnold/gifter/app"
 	"github.com/mattreidarnold/gifter/app/handlers"
-	"github.com/mattreidarnold/gifter/domain"
+	"github.com/mattreidarnold/gifter/frameworks/config"
 	"github.com/mattreidarnold/gifter/frameworks/id"
 	log "github.com/mattreidarnold/gifter/frameworks/log"
-	persistence "github.com/mattreidarnold/gifter/frameworks/persistence/inmem"
+	"github.com/mattreidarnold/gifter/frameworks/persistence/mongo"
 	"github.com/mattreidarnold/gifter/frameworks/transport"
 )
 
@@ -31,6 +31,11 @@ func init() {
 
 func serverRun(cmd *cobra.Command, args []string) {
 
+	config, err := config.Init()
+	if err != nil {
+		panic(err)
+	}
+
 	httpAddr := ":8080"
 
 	var kitLogger kitlog.Logger
@@ -42,7 +47,21 @@ func serverRun(cmd *cobra.Command, args []string) {
 
 	logger := log.NewLogger(kitLogger)
 
-	groupRepo := persistence.NewGroupRepository(logger, domain.NewGroup("1234", "group-name", 100))
+	mongoConn := mongo.Connection{
+		Database: config.MongoDatabase,
+		Host:     config.MongoHost,
+		Password: config.MongoPassword,
+		Port:     config.MongoPort,
+		Username: config.MongoUsername,
+	}
+	mongoClient, disconnect, err := mongo.NewClient(logger, mongoConn)
+	if err != nil {
+		kitLogger.Log("msg", "Error creating mongo client", "err", err)
+		return
+	}
+	defer disconnect()
+
+	groupRepo := mongo.NewGroupRepository(mongoClient)
 
 	msgBus := app.NewMessageBus(logger)
 
