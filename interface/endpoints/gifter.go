@@ -5,20 +5,35 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 
-	"github.com/mattreidarnold/gifter/app/usecase"
-	"github.com/mattreidarnold/gifter/domain/entities"
+	"github.com/mattreidarnold/gifter/app"
+	"github.com/mattreidarnold/gifter/domain"
 	"github.com/mattreidarnold/gifter/interface/presenters"
 )
 
-func MakeAddGifter(addUser usecase.AddGifter) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+func MakeAddGifter(d *app.Dependencies) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(presenters.AddGifterRequest)
-		g, err := addUser.Execute(entities.Gifter{Name: req.Name})
+
+		gifterID, err := d.GenerateID()
 		if err != nil {
-			return nil, nil
+			return nil, err
 		}
+
+		cmd := app.NewCommandMessage(domain.AddGifterCommand{
+			Name:     req.Name,
+			GifterID: gifterID,
+			GroupID:  req.GroupID,
+		})
+
+		err = d.MessageBus.Handle(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+
 		return presenters.AddGifterResponse{
-			Name: g.Name,
+			GifterID: gifterID,
+			GroupID:  req.GroupID,
+			Name:     req.Name,
 		}, nil
 	}
 }

@@ -1,6 +1,8 @@
 package log
 
 import (
+	"fmt"
+
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/mattreidarnold/gifter/app"
 )
@@ -15,6 +17,10 @@ func NewLogger(l kitlog.Logger) app.Logger {
 	}
 }
 
-func (l *logger) Info(s string) {
-	l.logger.Log("msg", s)
+func (l *logger) Info(args ...interface{}) {
+	l.logger.Log("msg", fmt.Sprint(args...))
+}
+
+func (l *logger) Error(err error, args ...interface{}) {
+	l.logger.Log("msg", fmt.Sprint(args...), "err", err)
 }
