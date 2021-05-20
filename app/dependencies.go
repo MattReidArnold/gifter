@@ -15,6 +15,7 @@ type Dependencies struct {
 
 type Logger interface {
 	Info(args ...interface{})
+	Error(err error, args ...interface{})
 }
 
 type GenerateID func() (string, error)

@@ -31,21 +31,21 @@ func init() {
 
 func serverRun(cmd *cobra.Command, args []string) {
 
-	config, err := config.Init()
-	if err != nil {
-		panic(err)
-	}
-
-	httpAddr := ":8080"
-
 	var kitLogger kitlog.Logger
 	{
 		kitLogger = kitlog.NewLogfmtLogger(os.Stderr)
 		kitLogger = kitlog.With(kitLogger, "ts", kitlog.DefaultTimestampUTC)
-		kitLogger = kitlog.With(kitLogger, "caller", kitlog.DefaultCaller)
 	}
 
 	logger := log.NewLogger(kitLogger)
+
+	config, err := config.Init()
+	if err != nil {
+		logger.Error(err, "failed to initialize config")
+		os.Exit(1)
+	}
+
+	httpAddr := ":8080"
 
 	mongoConn := mongo.Connection{
 		Database: config.MongoDatabase,
@@ -56,8 +56,8 @@ func serverRun(cmd *cobra.Command, args []string) {
 	}
 	mongoClient, disconnect, err := mongo.NewClient(logger, mongoConn)
 	if err != nil {
-		kitLogger.Log("msg", "Error creating mongo client", "err", err)
-		return
+		logger.Error(err, "failed to create mongo client")
+		os.Exit(1)
 	}
 	defer disconnect()
 

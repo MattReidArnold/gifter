@@ -20,3 +20,7 @@ func NewLogger(l kitlog.Logger) app.Logger {
 func (l *logger) Info(args ...interface{}) {
 	l.logger.Log("msg", fmt.Sprint(args...))
 }
+
+func (l *logger) Error(err error, args ...interface{}) {
+	l.logger.Log("msg", fmt.Sprint(args...), "err", err)
+}
