@@ -35,6 +35,7 @@ func serverRun(cmd *cobra.Command, args []string) {
 	{
 		kitLogger = kitlog.NewLogfmtLogger(os.Stderr)
 		kitLogger = kitlog.With(kitLogger, "ts", kitlog.DefaultTimestampUTC)
+		kitLogger = kitlog.With(kitLogger, "caller", kitlog.Caller(4))
 	}
 
 	logger := log.NewLogger(kitLogger)
