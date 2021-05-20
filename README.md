@@ -1,2 +1,3 @@
 # gifter-go
-adfadf
+
+A gift exchange app written using DDD and Clean Architecture patterns
