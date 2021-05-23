@@ -21,16 +21,16 @@ type Connection struct {
 	Username string
 }
 
-func (c Connection) ToURI() string {
+func (c Connection) URI() string {
 	return fmt.Sprintf("mongodb://%s:%s@%s:%s/%s", c.Username, c.Password, c.Host, c.Port, c.Database)
 }
 
 func NewClient(logger app.Logger, conn Connection) (*mongo.Client, Disconnect, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	logger.Info("connecting to mongo")
-	// client, err := mongo.Connect(ctx, options.Client().ApplyURI(fmt.Sprintf("mongodb://groupsUser:Password123@localhost:27017/groups")))
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conn.ToURI()))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conn.URI()))
 	if err != nil {
 		return nil, nil, err
 	}

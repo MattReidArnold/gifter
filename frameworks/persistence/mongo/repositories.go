@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mattreidarnold/gifter/app"
 	"github.com/mattreidarnold/gifter/domain"
@@ -12,6 +11,7 @@ import (
 
 type groupRepository struct {
 	client *mongo.Client
+	db     string
 }
 
 type Gifter struct {
@@ -26,9 +26,10 @@ type Group struct {
 	Gifters []Gifter `bson:"gifters"`
 }
 
-func NewGroupRepository(c *mongo.Client) app.GroupRepository {
+func NewGroupRepository(c *mongo.Client, db string) app.GroupRepository {
 	return &groupRepository{
 		client: c,
+		db:     db,
 	}
 }
 
@@ -36,7 +37,7 @@ func (gr *groupRepository) Get(ctx context.Context, id string) (domain.Group, er
 	doc := Group{}
 	err := gr.collection().FindOne(ctx, bson.D{{"identifier", id}}).Decode(&doc)
 	if err != nil {
-		return nil, err
+		return nil, app.ErrGroupNotFound
 	}
 	return doc.ToModel(), nil
 }
@@ -48,13 +49,12 @@ func (gr *groupRepository) Add(ctx context.Context, g domain.Group) error {
 func (gr *groupRepository) Save(ctx context.Context, g domain.Group) error {
 	doc := &Group{}
 	doc.FromModel(g)
-	fmt.Printf("saving %+v", doc)
 	err := gr.collection().FindOneAndReplace(ctx, bson.D{{"identifier", g.ID()}}, doc).Decode(&Group{})
 	return err
 }
 
 func (gr *groupRepository) collection() *mongo.Collection {
-	return gr.client.Database("groups").Collection("groups")
+	return gr.client.Database(gr.db).Collection("groups")
 }
 
 func (doc Group) ToModel() domain.Group {
