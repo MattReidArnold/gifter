@@ -2,11 +2,13 @@ package mongo_test
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/mattreidarnold/gifter/app"
+	"github.com/mattreidarnold/gifter/domain"
 	"github.com/mattreidarnold/gifter/frameworks/persistence/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	driver "go.mongodb.org/mongo-driver/mongo"
 )
 
 type stubLogger struct{}
@@ -14,53 +16,41 @@ type stubLogger struct{}
 func (l *stubLogger) Info(args ...interface{})             {}
 func (l *stubLogger) Error(err error, args ...interface{}) {}
 
-func Test_GroupRepository_Get_WhenGroupDoesNotExist(t *testing.T) {
-	logger := &stubLogger{}
-	// set up clean db
-	client, disconnect, err := mongo.NewClient(logger, mongo.Connection{
-		Database: "admin",
-		Host:     "localhost",
-		Password: "SuperSecret789",
-		Port:     "27017",
-		Username: "root",
-	})
-	if err != nil {
-		t.Fatal("failed to create mongo client:", err)
-	}
-	defer disconnect()
-	err = client.Database("groups_test").Drop(context.Background())
-	if err != nil {
-		t.Fatal("failed to drop groups_test db:", err)
-	}
-	// add group to Mongo with client
-	groupID := "8475439584"
+const groupsCollection = "groups"
 
-	// user repository to retrieve Group
-	repo := mongo.NewGroupRepository(client, "groups_test")
-	_, err = repo.Get(context.Background(), groupID)
-	// assert nil error
-	AssertEqual(t, err, app.ErrGroupNotFound)
+func Test_GroupRepository_Add_WhenGroupDoesNotExist(t *testing.T) {
+	client, db, tearDown := setUp(t)
+	defer tearDown()
+
+	groupID := NewRandomID()
+
+	group := domain.NewGroup(groupID, "test-group-name", 42, []domain.Gifter{domain.NewGifter("9876", "Bob")})
+
+	repo := mongo.NewGroupRepository(client, db)
+	err := repo.Add(context.Background(), group)
+
+	if err != nil {
+		t.Fatal("failed saving group:", err)
+	}
+
+	groupDoc := mongo.Group{}
+	err = client.Database(db).Collection(groupsCollection).FindOne(context.Background(), byIdFilter(groupID)).Decode(&groupDoc)
+	if err != nil {
+		t.Fatal("failed reloading saved group:", err)
+	}
+
+	assertModelEqualsDoc(t, group, groupDoc)
+
+	assertCountIs(t, client, db, groupID, 1)
 }
-func Test_GroupRepository_Get_WhenGroupExists(t *testing.T) {
-	logger := &stubLogger{}
-	// set up clean db
-	client, disconnect, err := mongo.NewClient(logger, mongo.Connection{
-		Database: "admin",
-		Host:     "localhost",
-		Password: "SuperSecret789",
-		Port:     "27017",
-		Username: "root",
-	})
-	if err != nil {
-		t.Fatal("failed to create mongo client:", err)
-	}
-	defer disconnect()
-	err = client.Database("groups_test").Drop(context.Background())
-	if err != nil {
-		t.Fatal("failed to drop groups_test db:", err)
-	}
-	// add group to Mongo with client
-	groupID := "8475439584"
+
+func Test_GroupRepository_Add_WhenGroupAlreadyIDExists(t *testing.T) {
+	client, db, tearDown := setUp(t)
+	defer tearDown()
+
+	want := app.ErrGroupIDAlreadyExists
+
+	groupID := NewRandomID()
 	groupDoc := mongo.Group{
 		ID:     groupID,
 		Name:   "test-group-name",
@@ -71,40 +61,139 @@ func Test_GroupRepository_Get_WhenGroupExists(t *testing.T) {
 			{ID: "6791", Name: "Jill"},
 		},
 	}
-	_, err = client.Database("groups_test").Collection("groups").InsertOne(context.Background(), groupDoc)
+	_, err := client.Database(db).Collection(groupsCollection).InsertOne(context.Background(), groupDoc)
 	if err != nil {
 		t.Fatal("failed inserting group doc:", err)
 	}
-	// user repository to retrieve Group
-	repo := mongo.NewGroupRepository(client, "groups_test")
+
+	group := domain.NewGroup(groupID, "test-some-other-name", 22, []domain.Gifter{})
+
+	repo := mongo.NewGroupRepository(client, db)
+	err = repo.Add(context.Background(), group)
+
+	AssertEqual(t, err, want)
+
+}
+func Test_GroupRepository_Get_WhenGroupDoesNotExist(t *testing.T) {
+	client, db, tearDown := setUp(t)
+	defer tearDown()
+
+	want := app.ErrGroupNotFound
+
+	groupID := NewRandomID()
+
+	repo := mongo.NewGroupRepository(client, db)
+	_, err := repo.Get(context.Background(), groupID)
+
+	AssertEqual(t, err, want)
+}
+
+func Test_GroupRepository_Get_WhenGroupExists(t *testing.T) {
+	client, db, tearDown := setUp(t)
+	defer tearDown()
+
+	groupID := NewRandomID()
+	groupDoc := mongo.Group{
+		ID:     groupID,
+		Name:   "test-group-name",
+		Budget: 249.99,
+		Gifters: []mongo.Gifter{
+			{ID: "6789", Name: "Jim"},
+			{ID: "6790", Name: "Joe"},
+			{ID: "6791", Name: "Jill"},
+		},
+	}
+	_, err := client.Database(db).Collection(groupsCollection).InsertOne(context.Background(), groupDoc)
+	if err != nil {
+		t.Fatal("failed inserting group doc:", err)
+	}
+	repo := mongo.NewGroupRepository(client, db)
 	got, err := repo.Get(context.Background(), groupID)
-	// assert nil error
 	if err != nil {
 		t.Fatal("failed getting group:", err)
 	}
 
-	// assert correct group
-	AssertEqual(t, got.ID(), groupID)
-	AssertEqual(t, got.Name(), groupDoc.Name)
-	AssertEqual(t, got.Budget(), groupDoc.Budget)
-	AssertEqual(t, len(got.Gifters()), len(groupDoc.Gifters))
-	for i, gifter := range got.Gifters() {
-		doc := groupDoc.Gifters[i]
-		AssertEqual(t, gifter.ID(), doc.ID)
-		AssertEqual(t, gifter.Name(), doc.Name)
-	}
+	assertModelEqualsDoc(t, got, groupDoc)
 }
 
-func AssertEqual(t *testing.T, got, want interface{}) {
-	t.Helper()
+func Test_GroupRepository_Save_WhenGroupDoesNotExist(t *testing.T) {
+	client, db, tearDown := setUp(t)
+	defer tearDown()
 
-	gotType := reflect.TypeOf(got)
-	wantType := reflect.TypeOf(want)
-	if gotType != wantType {
-		t.Errorf("got type: %v, want type: %v", gotType, wantType)
-		return
+	want := app.ErrGroupNotFound
+
+	groupID := NewRandomID()
+
+	repo := mongo.NewGroupRepository(client, db)
+	group := domain.NewGroup(groupID, "test-group-name", 42, []domain.Gifter{domain.NewGifter("9876", "Bob"), domain.NewGifter("3452", "Daryl")})
+
+	err := repo.Save(context.Background(), group)
+	AssertEqual(t, err, want)
+
+	assertCountIs(t, client, db, groupID, 0)
+}
+
+func Test_GroupRepository_Save_WhenGroupExists(t *testing.T) {
+	client, db, tearDown := setUp(t)
+	defer tearDown()
+
+	groupID := NewRandomID()
+	groupDoc := mongo.Group{
+		ID:     groupID,
+		Name:   "test-group-name",
+		Budget: 249.99,
+		Gifters: []mongo.Gifter{
+			{ID: "6789", Name: "Jim"},
+			{ID: "6790", Name: "Joe"},
+			{ID: "6791", Name: "Jill"},
+		},
 	}
-	if got != want {
-		t.Errorf("got: %v, want: %v", got, want)
+	_, err := client.Database(db).Collection(groupsCollection).InsertOne(context.Background(), groupDoc)
+	if err != nil {
+		t.Fatal("failed inserting group doc:", err)
+	}
+
+	repo := mongo.NewGroupRepository(client, db)
+	group := domain.NewGroup(groupID, "test-updated-group-name", 42, []domain.Gifter{domain.NewGifter("9876", "Bob")})
+
+	err = repo.Save(context.Background(), group)
+	if err != nil {
+		t.Fatal("failed saving group:", err)
+	}
+
+	updatedGroupDoc := mongo.Group{}
+	err = client.Database(db).Collection(groupsCollection).FindOne(context.Background(), byIdFilter(groupID)).Decode(&updatedGroupDoc)
+	if err != nil {
+		t.Fatal("failed reloading saved group:", err)
+	}
+
+	assertModelEqualsDoc(t, group, updatedGroupDoc)
+
+	assertCountIs(t, client, db, groupID, 1)
+}
+
+func byIdFilter(id string) bson.D {
+	return bson.D{{"identifier", id}}
+}
+
+func assertCountIs(t *testing.T, client *driver.Client, db string, groupID string, want int64) {
+	t.Helper()
+	count, err := client.Database(db).Collection(groupsCollection).CountDocuments(context.Background(), byIdFilter(groupID))
+	if err != nil {
+		t.Fatal("failed counting docs:", err)
+	}
+	AssertEqual(t, count, want)
+}
+
+func assertModelEqualsDoc(t *testing.T, m domain.Group, d mongo.Group) {
+	t.Helper()
+	AssertEqual(t, m.ID(), d.ID)
+	AssertEqual(t, m.Name(), d.Name)
+	AssertEqual(t, m.Budget(), d.Budget)
+	AssertEqual(t, len(m.Gifters()), len(d.Gifters))
+	for i, gifter := range m.Gifters() {
+		doc := d.Gifters[i]
+		AssertEqual(t, gifter.ID(), doc.ID)
+		AssertEqual(t, gifter.Name(), doc.Name)
 	}
 }

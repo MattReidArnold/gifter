@@ -33,23 +33,41 @@ func NewGroupRepository(c *mongo.Client, db string) app.GroupRepository {
 	}
 }
 
+func (gr *groupRepository) Add(ctx context.Context, g domain.Group) error {
+	doc := &Group{}
+	doc.FromModel(g)
+	filter := bson.D{{"identifier", g.ID()}}
+	err := gr.collection().FindOne(ctx, filter).Err()
+	if err == nil {
+		return app.ErrGroupIDAlreadyExists
+	}
+	if err != mongo.ErrNoDocuments {
+		return err
+	}
+	_, err = gr.collection().InsertOne(ctx, doc)
+	return err
+}
+
 func (gr *groupRepository) Get(ctx context.Context, id string) (domain.Group, error) {
 	doc := Group{}
 	err := gr.collection().FindOne(ctx, bson.D{{"identifier", id}}).Decode(&doc)
-	if err != nil {
+	if err == mongo.ErrNoDocuments {
 		return nil, app.ErrGroupNotFound
 	}
+	if err != nil {
+		return nil, err
+	}
 	return doc.ToModel(), nil
-}
-
-func (gr *groupRepository) Add(ctx context.Context, g domain.Group) error {
-	return nil
 }
 
 func (gr *groupRepository) Save(ctx context.Context, g domain.Group) error {
 	doc := &Group{}
 	doc.FromModel(g)
-	err := gr.collection().FindOneAndReplace(ctx, bson.D{{"identifier", g.ID()}}, doc).Decode(&Group{})
+	filter := bson.D{{"identifier", g.ID()}}
+	err := gr.collection().FindOneAndReplace(ctx, filter, doc).Decode(&Group{})
+	if err == mongo.ErrNoDocuments {
+		return app.ErrGroupNotFound
+	}
 	return err
 }
 
