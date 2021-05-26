@@ -1,4 +1,4 @@
-package mongo_test
+package test
 
 import (
 	"reflect"
@@ -14,7 +14,6 @@ func AssertEqual(t *testing.T, got, want interface{}) {
 	wantType := reflect.TypeOf(want)
 	if gotType != wantType {
 		t.Errorf("got type: %v, want type: %v", gotType, wantType)
-		return
 	}
 	if got != want {
 		t.Errorf("got: %v, want: %v", got, want)

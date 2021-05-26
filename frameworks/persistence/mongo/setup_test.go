@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mattreidarnold/gifter/frameworks/persistence/mongo"
+	"github.com/mattreidarnold/gifter/test"
 	driver "go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -14,8 +15,8 @@ const dbPrefix = "groups_test_"
 
 func setUp(t *testing.T) (client *driver.Client, db string, td tearDown) {
 	t.Helper()
-	db = dbPrefix + NewRandomID()
-	logger := &stubLogger{}
+	db = dbPrefix + test.NewRandomID()
+	logger := test.NewStubLogger()
 	client, disconnect, err := mongo.NewClient(logger, mongo.Connection{
 		Database: "admin",
 		Host:     "localhost",
