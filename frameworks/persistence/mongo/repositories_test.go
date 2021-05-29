@@ -25,15 +25,11 @@ func Test_GroupRepository_Add_WhenGroupDoesNotExist(t *testing.T) {
 	repo := mongo.NewGroupRepository(client, db)
 	err := repo.Add(context.Background(), group)
 
-	if err != nil {
-		t.Fatal("failed saving group:", err)
-	}
+	test.AssertNil(t, err, "failed saving group")
 
 	groupDoc := mongo.Group{}
 	err = client.Database(db).Collection(groupsCollection).FindOne(context.Background(), byIdFilter(groupID)).Decode(&groupDoc)
-	if err != nil {
-		t.Fatal("failed reloading saved group:", err)
-	}
+	test.AssertNil(t, err, "failed reloading saved group")
 
 	assertModelEqualsDoc(t, group, groupDoc)
 
@@ -58,17 +54,14 @@ func Test_GroupRepository_Add_WhenGroupAlreadyIDExists(t *testing.T) {
 		},
 	}
 	_, err := client.Database(db).Collection(groupsCollection).InsertOne(context.Background(), groupDoc)
-	if err != nil {
-		t.Fatal("failed inserting group doc:", err)
-	}
+	test.AssertNil(t, err, "failed inserting group doc")
 
 	group := domain.NewGroup(groupID, "test-some-other-name", 22, []domain.Gifter{})
 
 	repo := mongo.NewGroupRepository(client, db)
 	err = repo.Add(context.Background(), group)
 
-	test.AssertEqual(t, err, want)
-
+	test.AssertErrorEqual(t, err, want)
 }
 func Test_GroupRepository_Get_WhenGroupDoesNotExist(t *testing.T) {
 	client, db, tearDown := setUp(t)
@@ -100,14 +93,11 @@ func Test_GroupRepository_Get_WhenGroupExists(t *testing.T) {
 		},
 	}
 	_, err := client.Database(db).Collection(groupsCollection).InsertOne(context.Background(), groupDoc)
-	if err != nil {
-		t.Fatal("failed inserting group doc:", err)
-	}
+	test.AssertNil(t, err, "failed inserting group doc")
+
 	repo := mongo.NewGroupRepository(client, db)
 	got, err := repo.Get(context.Background(), groupID)
-	if err != nil {
-		t.Fatal("failed getting group:", err)
-	}
+	test.AssertNil(t, err, "failed getting Group")
 
 	assertModelEqualsDoc(t, got, groupDoc)
 }
@@ -145,23 +135,17 @@ func Test_GroupRepository_Save_WhenGroupExists(t *testing.T) {
 		},
 	}
 	_, err := client.Database(db).Collection(groupsCollection).InsertOne(context.Background(), groupDoc)
-	if err != nil {
-		t.Fatal("failed inserting group doc:", err)
-	}
+	test.AssertNil(t, err, "failed inserting group doc")
 
 	repo := mongo.NewGroupRepository(client, db)
 	group := domain.NewGroup(groupID, "test-updated-group-name", 42, []domain.Gifter{domain.NewGifter("9876", "Bob")})
 
 	err = repo.Save(context.Background(), group)
-	if err != nil {
-		t.Fatal("failed saving group:", err)
-	}
+	test.AssertNil(t, err, "failed saving Group")
 
 	updatedGroupDoc := mongo.Group{}
 	err = client.Database(db).Collection(groupsCollection).FindOne(context.Background(), byIdFilter(groupID)).Decode(&updatedGroupDoc)
-	if err != nil {
-		t.Fatal("failed reloading saved group:", err)
-	}
+	test.AssertNil(t, err, "failed reloading group doc")
 
 	assertModelEqualsDoc(t, group, updatedGroupDoc)
 
@@ -175,21 +159,19 @@ func byIdFilter(id string) bson.D {
 func assertCountIs(t *testing.T, client *driver.Client, db string, groupID string, want int64) {
 	t.Helper()
 	count, err := client.Database(db).Collection(groupsCollection).CountDocuments(context.Background(), byIdFilter(groupID))
-	if err != nil {
-		t.Fatal("failed counting docs:", err)
-	}
-	test.AssertEqual(t, count, want)
+	test.AssertNil(t, err, "failed counting docs")
+	test.AssertEqual(t, count, want, "doc count")
 }
 
 func assertModelEqualsDoc(t *testing.T, m domain.Group, d mongo.Group) {
 	t.Helper()
-	test.AssertEqual(t, m.ID(), d.ID)
-	test.AssertEqual(t, m.Name(), d.Name)
-	test.AssertEqual(t, m.Budget(), d.Budget)
-	test.AssertEqual(t, len(m.Gifters()), len(d.Gifters))
+	test.AssertEqual(t, m.ID(), d.ID, "group.ID()")
+	test.AssertEqual(t, m.Name(), d.Name, "group.Name()")
+	test.AssertEqual(t, m.Budget(), d.Budget, "group.Budget()")
+	test.AssertEqual(t, len(m.Gifters()), len(d.Gifters), "len(group.Gifters())")
 	for i, gifter := range m.Gifters() {
 		doc := d.Gifters[i]
-		test.AssertEqual(t, gifter.ID(), doc.ID)
-		test.AssertEqual(t, gifter.Name(), doc.Name)
+		test.AssertEqual(t, gifter.ID(), doc.ID, "gifter.ID()")
+		test.AssertEqual(t, gifter.Name(), doc.Name, "gifter.Name()")
 	}
 }

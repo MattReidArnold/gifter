@@ -1,4 +1,4 @@
-package test
+package stub
 
 import "github.com/mattreidarnold/gifter/app"
 

@@ -21,19 +21,13 @@ func Test_GroupRepository_Add_WhenGroupDoesNotExist(t *testing.T) {
 	repo := inmem.NewGroupRepository()
 	err := repo.Add(context.Background(), group)
 
-	if err != nil {
-		t.Fatal("failed saving group:", err)
-	}
+	test.AssertNil(t, err, "failed saving group")
 
 	inmemRepo, ok := repo.(*inmem.GroupRepo)
-	if !ok {
-		t.Fatal("wrong type of GroupRepository")
-	}
+	test.AssertTrue(t, ok, "inmem.GroupRepo type cast")
 
 	persistedGroup, ok := inmemRepo.Groups[groupID]
-	if !ok {
-		t.Fatal("group not persisted in repo")
-	}
+	test.AssertTrue(t, ok, "group not persisted in repo")
 
 	test.AssertEqual(t, persistedGroup, group)
 }
@@ -71,9 +65,7 @@ func Test_GroupRepository_Get_WhenGroupExists(t *testing.T) {
 	repo := inmem.NewGroupRepository(want)
 	got, err := repo.Get(context.Background(), groupID)
 
-	if err != nil {
-		t.Fatalf("failed getting existing group: %e", err)
-	}
+	test.AssertNil(t, err, "failed getting existing group")
 	test.AssertEqual(t, got, want)
 }
 
@@ -86,17 +78,13 @@ func Test_GroupRepository_Save_WhenGroupDoesNotExist(t *testing.T) {
 
 	err := repo.Save(context.Background(), group)
 
-	test.AssertEqual(t, err, want)
+	test.AssertErrorEqual(t, err, want)
 
 	inmemRepo, ok := repo.(*inmem.GroupRepo)
-	if !ok {
-		t.Fatal("wrong type of GroupRepository")
-	}
+	test.AssertTrue(t, ok, "inmem.GroupRepo type cast")
 
 	_, persisted := inmemRepo.Groups[groupID]
-	if persisted {
-		t.Fatal("group should not be persisted")
-	}
+	test.AssertFalse(t, persisted, "group should not be persisted")
 }
 
 func Test_GroupRepository_Save_WhenGroupExists(t *testing.T) {
@@ -111,19 +99,13 @@ func Test_GroupRepository_Save_WhenGroupExists(t *testing.T) {
 
 	err := repo.Save(context.Background(), updatedGroup)
 
-	if err != nil {
-		t.Fatal("failed saving group:", err)
-	}
+	test.AssertNil(t, err, "failed saving group")
 
 	inmemRepo, ok := repo.(*inmem.GroupRepo)
-	if !ok {
-		t.Fatal("wrong type of GroupRepository")
-	}
+	test.AssertTrue(t, ok, "inmem.GroupRepo type cast")
 
 	peristedGroup, persisted := inmemRepo.Groups[groupID]
-	if !persisted {
-		t.Fatal("group should be persisted")
-	}
+	test.AssertTrue(t, persisted, "group should be persisted")
 
 	test.AssertEqual(t, updatedGroup, peristedGroup)
 }
