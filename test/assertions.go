@@ -1,6 +1,7 @@
 package test
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -33,6 +34,13 @@ func AssertErrorEqual(t *testing.T, got, want error, args ...string) {
 	t.Helper()
 	if got == nil || got.Error() != want.Error() {
 		FailAssertion(t, got, want, append(args, "AssertErrorEqual")...)
+	}
+}
+
+func AssertErrorIs(t *testing.T, got, want error, args ...string) {
+	t.Helper()
+	if got == nil || !errors.Is(got, want) {
+		FailAssertion(t, got, want, append(args, "AssertErrorIs")...)
 	}
 }
 
