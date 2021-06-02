@@ -62,6 +62,11 @@ func (grp *group) Gifters() []Gifter {
 	return grp.gifters
 }
 func (grp *group) AddGifter(g Gifter) error {
+	for _, member := range grp.gifters {
+		if member.ID() == g.ID() {
+			return ErrGifterAlreadyInGroup
+		}
+	}
 	grp.gifters = append(grp.gifters, g)
 	return nil
 }
