@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"errors"
 	"reflect"
 
 	"github.com/mattreidarnold/gifter/app"
@@ -13,7 +12,7 @@ func MakeAddGifter(d *app.Dependencies) (reflect.Type, app.HandlerFunc) {
 	return reflect.TypeOf(domain.AddGifterCommand{}), func(ctx context.Context, msg app.Message) error {
 		cmd, ok := msg.Payload().(domain.AddGifterCommand)
 		if !ok {
-			return errors.New("invalid message received by handler")
+			return app.ErrInvalidMessageTypeForHandler
 		}
 
 		group, err := d.GroupRepository.Get(ctx, cmd.GroupID)
