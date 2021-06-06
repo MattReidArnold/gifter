@@ -62,7 +62,7 @@ func serverRun(cmd *cobra.Command, args []string) {
 	}
 	defer disconnect()
 
-	groupRepo := mongo.NewGroupRepository(mongoClient)
+	groupRepo := mongo.NewGroupRepository(mongoClient, config.MongoDatabase)
 
 	msgBus := app.NewMessageBus(logger)
 

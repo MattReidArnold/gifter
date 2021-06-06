@@ -2,46 +2,45 @@ package inmem
 
 import (
 	"context"
-	"errors"
 
 	"github.com/mattreidarnold/gifter/app"
 	"github.com/mattreidarnold/gifter/domain"
 )
 
-type groupRepo struct {
-	groups map[string]domain.Group
-	app.Logger
+type GroupRepo struct {
+	Groups map[string]domain.Group
 }
 
-func NewGroupRepository(logger app.Logger, groups ...domain.Group) app.GroupRepository {
+func NewGroupRepository(groups ...domain.Group) app.GroupRepository {
 	m := make(map[string]domain.Group, len(groups))
 	for _, g := range groups {
 		m[g.ID()] = g
 	}
-	return &groupRepo{
-		groups: m,
-		Logger: logger,
+	return &GroupRepo{
+		Groups: m,
 	}
 }
 
-func (r *groupRepo) Get(ctx context.Context, id string) (domain.Group, error) {
-	g, ok := r.groups[id]
+func (r *GroupRepo) Get(ctx context.Context, id string) (domain.Group, error) {
+	g, ok := r.Groups[id]
 	if !ok {
-		return nil, errors.New("not found")
+		return nil, app.ErrGroupNotFound
 	}
 	return g, nil
 }
 
-func (r *groupRepo) Add(ctx context.Context, group domain.Group) error {
-	if _, ok := r.groups[group.ID()]; ok {
-		return errors.New("already exists")
+func (r *GroupRepo) Add(ctx context.Context, group domain.Group) error {
+	if _, ok := r.Groups[group.ID()]; ok {
+		return app.ErrGroupIDAlreadyExists
 	}
-
-	r.groups[group.ID()] = group
+	r.Groups[group.ID()] = group
 	return nil
 }
 
-func (r *groupRepo) Save(ctx context.Context, group domain.Group) error {
-	r.Logger.Info("Saving group", group)
+func (r *GroupRepo) Save(ctx context.Context, group domain.Group) error {
+	if _, ok := r.Groups[group.ID()]; !ok {
+		return app.ErrGroupNotFound
+	}
+	r.Groups[group.ID()] = group
 	return nil
 }

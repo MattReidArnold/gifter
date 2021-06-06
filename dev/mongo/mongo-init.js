@@ -8,3 +8,14 @@ db.createUser({
     },
   ],
 });
+
+db.createUser({
+  user: "groupsTestUser",
+  pwd: "Password456",
+  roles: [
+    {
+      role: "readWrite",
+      db: "groups_test",
+    },
+  ],
+});

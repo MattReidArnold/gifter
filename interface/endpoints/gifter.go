@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
 
@@ -16,7 +17,7 @@ func MakeAddGifter(d *app.Dependencies) endpoint.Endpoint {
 
 		gifterID, err := d.GenerateID()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not generate id: %w", err)
 		}
 
 		cmd := app.NewCommandMessage(domain.AddGifterCommand{
