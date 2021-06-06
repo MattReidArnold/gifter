@@ -9,8 +9,8 @@ import (
 	"github.com/mattreidarnold/gifter/domain"
 	"github.com/mattreidarnold/gifter/interface/endpoints"
 	"github.com/mattreidarnold/gifter/interface/presenters"
-	"github.com/mattreidarnold/gifter/test"
 	"github.com/mattreidarnold/gifter/test/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_MakeAddGifter_WhenIDGeneratorFails(t *testing.T) {
@@ -27,7 +27,7 @@ func Test_MakeAddGifter_WhenIDGeneratorFails(t *testing.T) {
 
 	_, err := addGifter(context.Background(), req)
 
-	test.AssertErrorIs(t, err, ErrGenerateIDNeverWorks)
+	assert.ErrorIs(t, err, ErrGenerateIDNeverWorks)
 }
 
 func Test_MakeAddGifter_WhenIDGeneratorSucceeds(t *testing.T) {
@@ -67,7 +67,6 @@ func Test_MakeAddGifter_WhenIDGeneratorSucceeds(t *testing.T) {
 
 	got, err := addGifter(context.Background(), req)
 
-	test.AssertNil(t, err)
-	test.AssertEqual(t, got, want)
-
+	assert.Nil(t, err)
+	assert.Equal(t, got, want)
 }

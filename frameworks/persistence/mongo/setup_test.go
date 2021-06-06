@@ -8,6 +8,7 @@ import (
 	"github.com/mattreidarnold/gifter/frameworks/persistence/mongo"
 	"github.com/mattreidarnold/gifter/test"
 	"github.com/mattreidarnold/gifter/test/stub"
+	"github.com/stretchr/testify/assert"
 	driver "go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -26,14 +27,14 @@ func setUp(t *testing.T) (client *driver.Client, db string, td tearDown) {
 		Port:     "27017",
 		Username: "root",
 	})
-	test.AssertNil(t, err, "failed to create mongo client")
+	assert.Nil(t, err, "failed to create mongo client")
 
 	err = client.Database(db).Drop(context.Background())
-	test.AssertNil(t, err, fmt.Sprintf("failed to set up %s db", db))
+	assert.Nil(t, err, fmt.Sprintf("failed to set up %s db", db))
 
 	td = func() {
 		err = client.Database(db).Drop(context.Background())
-		test.AssertNil(t, err, fmt.Sprintf("failed to tear down %s db", db))
+		assert.Nil(t, err, fmt.Sprintf("failed to tear down %s db", db))
 		disconnect()
 	}
 	return
