@@ -49,7 +49,6 @@ func Test_MakeAddGifter_WhenGroupNotFound(t *testing.T) {
 	uow.On("Groups").Return(repo)
 
 	d := &app.Dependencies{
-		GroupRepository: repo,
 		UseUnitOfWork: func(c context.Context, f func(context.Context, app.UnitOfWork) error) error {
 			return f(c, uow)
 		},

@@ -62,18 +62,15 @@ func serverRun(cmd *cobra.Command, args []string) {
 	}
 	defer disconnect()
 
-	groupRepo := mongo.NewGroupRepository(mongoClient, config.MongoDatabase)
-
 	useUOW := mongo.MongoUnitOfWork(mongoClient, config.MongoDatabase)
 
 	msgBus := app.NewMessageBus(logger)
 
 	d := &app.Dependencies{
-		Logger:          logger,
-		GroupRepository: groupRepo,
-		MessageBus:      msgBus,
-		GenerateID:      id.GenerateId,
-		UseUnitOfWork:   useUOW,
+		Logger:        logger,
+		MessageBus:    msgBus,
+		GenerateID:    id.GenerateId,
+		UseUnitOfWork: useUOW,
 	}
 
 	handlers.RegisterAll(d)

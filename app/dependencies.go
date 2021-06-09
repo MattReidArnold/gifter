@@ -7,7 +7,6 @@ import (
 )
 
 type Dependencies struct {
-	GroupRepository
 	GenerateID
 	Logger
 	MessageBus
