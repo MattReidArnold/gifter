@@ -41,11 +41,17 @@ func Test_MakeAddGifter_WhenGroupNotFound(t *testing.T) {
 	name := "test-gifter-name"
 
 	ctx := context.Background()
+
 	repo := &mocks.GroupRepository{}
 	repo.On("Get", ctx, groupID).Return(nil, expected).Once()
 
+	uow := &mocks.UnitOfWork{}
+	uow.On("Groups").Return(repo)
+
 	d := &app.Dependencies{
-		GroupRepository: repo,
+		UseUnitOfWork: func(c context.Context, f func(context.Context, app.UnitOfWork) error) error {
+			return f(c, uow)
+		},
 	}
 
 	_, handler := handlers.MakeAddGifter(d)

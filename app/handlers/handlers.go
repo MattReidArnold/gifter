@@ -15,16 +15,16 @@ func MakeAddGifter(d *app.Dependencies) (reflect.Type, app.HandlerFunc) {
 			return app.ErrInvalidMessageTypeForHandler
 		}
 
-		group, err := d.GroupRepository.Get(ctx, cmd.GroupID)
-		if err != nil {
-			return err
-		}
-
-		err = group.AddGifter(domain.NewGifter(cmd.GifterID, cmd.Name))
-		if err != nil {
-			return err
-		}
-		err = d.GroupRepository.Save(ctx, group)
-		return err
+		return d.UseUnitOfWork(ctx, func(ctxUOW context.Context, uow app.UnitOfWork) error {
+			group, err := uow.Groups().Get(ctxUOW, cmd.GroupID)
+			if err != nil {
+				return err
+			}
+			err = group.AddGifter(domain.NewGifter(cmd.GifterID, cmd.Name))
+			if err != nil {
+				return err
+			}
+			return uow.Groups().Save(ctxUOW, group)
+		})
 	}
 }

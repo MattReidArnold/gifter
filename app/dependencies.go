@@ -7,10 +7,10 @@ import (
 )
 
 type Dependencies struct {
-	GroupRepository
 	GenerateID
 	Logger
 	MessageBus
+	UseUnitOfWork
 }
 
 type Logger interface {
@@ -25,3 +25,9 @@ type GroupRepository interface {
 	Add(context.Context, domain.Group) error
 	Save(context.Context, domain.Group) error
 }
+
+type UnitOfWork interface {
+	Groups() GroupRepository
+}
+
+type UseUnitOfWork func(context.Context, func(context.Context, UnitOfWork) error) error
