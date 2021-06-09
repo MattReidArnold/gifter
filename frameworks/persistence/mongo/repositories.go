@@ -26,7 +26,7 @@ type Group struct {
 	Gifters []Gifter `bson:"gifters"`
 }
 
-func NewGroupRepository(c *mongo.Client, db string) app.GroupRepository {
+func NewGroupRepository(c *mongo.Client, db string) *groupRepository {
 	return &groupRepository{
 		client: c,
 		db:     db,

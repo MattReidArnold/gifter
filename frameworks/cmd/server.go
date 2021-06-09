@@ -64,6 +64,8 @@ func serverRun(cmd *cobra.Command, args []string) {
 
 	groupRepo := mongo.NewGroupRepository(mongoClient, config.MongoDatabase)
 
+	useUOW := mongo.MongoUnitOfWork(mongoClient, config.MongoDatabase)
+
 	msgBus := app.NewMessageBus(logger)
 
 	d := &app.Dependencies{
@@ -71,6 +73,7 @@ func serverRun(cmd *cobra.Command, args []string) {
 		GroupRepository: groupRepo,
 		MessageBus:      msgBus,
 		GenerateID:      id.GenerateId,
+		UseUnitOfWork:   useUOW,
 	}
 
 	handlers.RegisterAll(d)
