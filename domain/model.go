@@ -5,12 +5,14 @@ type Gifter interface {
 	Name() string
 }
 
+type Events []interface{}
+
 type Group interface {
 	ID() string
 	Name() string
 	Budget() float64
 	Gifters() []Gifter
-	AddGifter(Gifter) error
+	AddGifter(Gifter) (Events, error)
 }
 
 type gifter struct {
@@ -61,12 +63,18 @@ func (grp *group) Budget() float64 {
 func (grp *group) Gifters() []Gifter {
 	return grp.gifters
 }
-func (grp *group) AddGifter(g Gifter) error {
+func (grp *group) AddGifter(g Gifter) (Events, error) {
 	for _, member := range grp.gifters {
 		if member.ID() == g.ID() {
-			return ErrGifterAlreadyInGroup
+			return Events{}, ErrGifterAlreadyInGroup
 		}
 	}
 	grp.gifters = append(grp.gifters, g)
-	return nil
+	return Events{
+		GifterAddedEvent{
+			GroupID:  grp.id,
+			GifterID: g.ID(),
+			Name:     g.Name(),
+		},
+	}, nil
 }
