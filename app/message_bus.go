@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 type MessageType int
@@ -59,11 +60,12 @@ func (m *message) PayloadType() reflect.Type {
 }
 
 func (m *message) String() string {
-	return fmt.Sprintf("%v: %v", m.PayloadType(), m.Payload())
+	return fmt.Sprintf("%v: %+v", m.PayloadType(), m.Payload())
 }
 
 type MessageBus interface {
 	Handle(context.Context, Message) error
+	EnqueueEvents(...interface{}) error
 	RegisterCommandHandler(reflect.Type, HandlerFunc)
 	RegisterEventHandler(reflect.Type, HandlerFunc)
 }
@@ -72,6 +74,7 @@ type messageBus struct {
 	eventHandlers   EventHandlerRegistry
 	queue           *list.List
 	Logger
+	sync.Mutex
 }
 
 func NewMessageBus(l Logger) MessageBus {
@@ -84,15 +87,14 @@ func NewMessageBus(l Logger) MessageBus {
 }
 
 func (mb *messageBus) Handle(ctx context.Context, m Message) error {
-	mb.queue.Init().PushFront(m)
-	for mb.queue.Len() > 0 {
-		node := mb.queue.Front()
-		msg, ok := node.Value.(Message)
-		if !ok {
-			return errors.New("invalid thing in message bus queue")
+	mb.initMessageQueue(m)
+	for mb.hasMessages() {
+		msg, err := mb.nextMessage()
+		if err != nil {
+			return err
 		}
 		mb.Logger.Info(fmt.Sprintf("handling message %v", msg))
-		var err error
+
 		switch msg.MessageType() {
 		case MessageTypeCommand:
 			err = mb.handleCommand(ctx, msg)
@@ -104,7 +106,17 @@ func (mb *messageBus) Handle(ctx context.Context, m Message) error {
 		if err != nil {
 			return err
 		}
-		mb.queue.Remove(node)
+	}
+	return nil
+}
+
+func (mb *messageBus) EnqueueEvents(events ...interface{}) error {
+	mb.Lock()
+	defer mb.Unlock()
+
+	for _, e := range events {
+		m := NewEventMessage(e)
+		mb.queue.PushBack(m)
 	}
 	return nil
 }
@@ -145,4 +157,29 @@ func (mb *messageBus) RegisterCommandHandler(t reflect.Type, h HandlerFunc) {
 		panic(errors.New("multiple handlers registered for a single command type"))
 	}
 	mb.commandHandlers[t] = h
+}
+
+func (mb *messageBus) hasMessages() bool {
+	mb.Lock()
+	defer mb.Unlock()
+	return mb.queue.Len() > 0
+}
+
+func (mb *messageBus) initMessageQueue(msg Message) {
+	mb.Lock()
+	defer mb.Unlock()
+	mb.queue.Init().PushFront(msg)
+}
+
+func (mb *messageBus) nextMessage() (Message, error) {
+	mb.Lock()
+	defer mb.Unlock()
+
+	node := mb.queue.Front()
+	mb.queue.Remove(node)
+	msg, ok := node.Value.(Message)
+	if !ok {
+		return nil, errors.New("invalid thing in message bus queue")
+	}
+	return msg, nil
 }

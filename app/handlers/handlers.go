@@ -20,11 +20,22 @@ func MakeAddGifter(d *app.Dependencies) (reflect.Type, app.HandlerFunc) {
 			if err != nil {
 				return err
 			}
-			err = group.AddGifter(domain.NewGifter(cmd.GifterID, cmd.Name))
+			events, err := group.AddGifter(domain.NewGifter(cmd.GifterID, cmd.Name))
+			if err != nil {
+				return err
+			}
+			err = d.MessageBus.EnqueueEvents(events...)
 			if err != nil {
 				return err
 			}
 			return uow.Groups().Save(ctxUOW, group)
 		})
+	}
+}
+
+func SendGifterWelcomeNotification(d *app.Dependencies) (reflect.Type, app.HandlerFunc) {
+	return reflect.TypeOf(domain.GifterAddedEvent{}), func(c context.Context, m app.Message) error {
+		d.Logger.Info("TODO: Send welcome notification to newly added gifter")
+		return nil
 	}
 }

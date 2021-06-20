@@ -13,17 +13,26 @@ type Group struct {
 }
 
 // AddGifter provides a mock function with given fields: _a0
-func (_m *Group) AddGifter(_a0 domain.Gifter) error {
+func (_m *Group) AddGifter(_a0 domain.Gifter) (domain.Events, error) {
 	ret := _m.Called(_a0)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(domain.Gifter) error); ok {
+	var r0 domain.Events
+	if rf, ok := ret.Get(0).(func(domain.Gifter) domain.Events); ok {
 		r0 = rf(_a0)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.Events)
+		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(domain.Gifter) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Budget provides a mock function with given fields:

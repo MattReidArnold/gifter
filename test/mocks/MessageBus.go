@@ -17,6 +17,22 @@ type MessageBus struct {
 	mock.Mock
 }
 
+// EnqueueEvents provides a mock function with given fields: _a0
+func (_m *MessageBus) EnqueueEvents(_a0 ...interface{}) error {
+	var _ca []interface{}
+	_ca = append(_ca, _a0...)
+	ret := _m.Called(_ca...)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(...interface{}) error); ok {
+		r0 = rf(_a0...)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Handle provides a mock function with given fields: _a0, _a1
 func (_m *MessageBus) Handle(_a0 context.Context, _a1 app.Message) error {
 	ret := _m.Called(_a0, _a1)
